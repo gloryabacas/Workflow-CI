@@ -1,0 +1,61 @@
+name: Heart Disease Model Training Pipeline
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'MLProject/**'
+  workflow_dispatch:
+
+jobs:
+  training-pipeline:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Clone repository
+        uses: actions/checkout@v3
+
+      - name: Prepare Python environment
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+
+      - name: Install required packages
+        run: |
+          python -m pip install --upgrade pip
+          pip install mlflow dagshub pandas scikit-learn matplotlib joblib
+
+      - name: Train model via MLflow
+        env:
+          DAGSHUB_USER_TOKEN: ${{ secrets.DAGSHUB_USER_TOKEN }}
+        run: |
+          cd MLProject
+          mlflow run . --env-manager=local
+
+      - name: Commit training artifacts to repository
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add MLProject/artifacts/
+          git diff --staged --quiet || git commit -m "chore: save training artifacts [skip ci]"
+          git push
+
+      - name: Package model as Docker image
+        env:
+          DAGSHUB_USER_TOKEN: ${{ secrets.DAGSHUB_USER_TOKEN }}
+        run: |
+          mlflow models build-docker \
+            --model-uri "models:/heart-disease-model/latest" \
+            --name "heart-disease-model"
+
+      - name: Publish image to Docker Hub
+        env:
+          DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
+          DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
+        run: |
+          echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
+          docker tag heart-disease-model $DOCKER_USERNAME/heart-disease-model:latest
+          docker push $DOCKER_USERNAME/heart-disease-model:latest
