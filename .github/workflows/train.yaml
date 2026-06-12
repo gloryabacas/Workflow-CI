@@ -26,21 +26,22 @@ jobs:
       - name: Install required packages
         run: |
           python -m pip install --upgrade pip
+          # Kita pasang mlflow dan dagshub di luar virtual env sebagai pemicu utama
           pip install mlflow dagshub pandas scikit-learn matplotlib joblib
 
-      - name: Train model via MLflow
+      - name: Train model via MLflow Project
         env:
           DAGSHUB_USER_TOKEN: ${{ secrets.DAGSHUB_USER_TOKEN }}
         run: |
           cd MLProject
-
-          mlflow run . --env-manager=local
+          # REVISI: Mengubah env-manager menjadi virtualenv agar MLflow 
+          # otomatis membaca dan membangun pustaka berdasarkan file conda.yaml kamu
+          mlflow run . --env-manager=virtualenv
 
       - name: Commit training artifacts to repository
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-
           mkdir -p MLProject/artifacts/
           git add MLProject/artifacts/
           git diff --staged --quiet || git commit -m "chore: save training artifacts [skip ci]"
