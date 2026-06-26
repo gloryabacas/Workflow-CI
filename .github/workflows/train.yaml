@@ -28,13 +28,14 @@ jobs:
           python -m pip install --upgrade pip
           pip install mlflow==2.13.0 scikit-learn==1.4.2 pandas==2.2.2 joblib==1.4.2 matplotlib==3.8.4 dagshub
 
-      - name: Train model via Python directly
+      - name: Train model via MLflow Run
         env:
           DAGSHUB_USER_TOKEN: ${{ secrets.DAGSHUB_USER_TOKEN }}
+          MLFLOW_ALLOW_FILE_STORE: "true"
         run: |
           cd MLProject
           export MLFLOW_TRACKING_URI=https://dagshub.com/gloryabacas/Workflow-CI.mlflow
-          python modelling.py
+          mlflow run . --env-manager=local
 
       - name: Commit training artifacts to repository
         run: |
