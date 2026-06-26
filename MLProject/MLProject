@@ -1,7 +1,5 @@
 name: heart_disease_modelling
 
-conda_env: conda.yaml
-
 entry_points:
   main:
     command: "python modelling.py"
