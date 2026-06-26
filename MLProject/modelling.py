@@ -9,19 +9,11 @@ from sklearn.metrics import confusion_matrix, ConfusionMatrixDisplay
 
 import mlflow
 import mlflow.sklearn
-import dagshub
 
 # 1. Mengaktifkan autolog sebelum melatih model sesuai ketentuan Dicoding
 mlflow.autolog()
 
-# 2. Inisialisasi DagsHub Tracking
-dagshub.init(
-    repo_owner='gloryabacas',
-    repo_name='Workflow-CI',
-    mlflow=True
-)
-
-# 3. Membaca dataset preprocessing
+# 2. Membaca dataset preprocessing
 df = pd.read_csv("dataset_preprocessing.csv")
 
 X = df.drop("target", axis=1)
@@ -36,10 +28,10 @@ X_train, X_test, y_train, y_test = train_test_split(
 
 os.makedirs("artifacts", exist_ok=True)
 
-# 4. Memberikan nama eksperimen kriteria basic
+# 3. Memberikan nama eksperimen kriteria basic
 mlflow.set_experiment("heart_disease_experiment")
 
-# 5. Eksekusi run tracking MLflow
+# 4. Eksekusi run tracking MLflow
 with mlflow.start_run(run_name="LogReg_CI_run"):
 
     # Inisialisasi model dasar tanpa hyperparameter tuning
